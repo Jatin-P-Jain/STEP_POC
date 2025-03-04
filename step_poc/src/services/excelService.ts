@@ -1,34 +1,51 @@
+// excelFetcher.ts
 import * as XLSX from "xlsx";
 
+export interface ExcelOptions {
+  /** Path to the Excel file (e.g., '/sample.xlsx' in the public folder) */
+  filePath: string;
+  /** The header name of the column you want to extract */
+  targetColumn: string;
+  /** (Optional) Header name of the column to filter on */
+  filterColumn?: string;
+  /** (Optional) The value to filter the rows by */
+  filterValue?: any;
+}
+
 /**
- * Fetches and parses an Excel file from a given URL.
- * Returns a 2D array where the first row is the header row.
+ * Fetches an Excel file, parses it, optionally filters the data,
+ * and returns an array of values from the target column.
+ *
+ * @param options ExcelOptions containing filePath, targetColumn, and optional filter criteria.
+ * @returns A promise resolving to an array of data from the target column.
  */
-export const fetchExcelData = async (fileUrl: string): Promise<any[][]> => {
-  try {
-    const response = await fetch(fileUrl);
-    console.log("Status:", response.status);
-    console.log("Content-Type:", response.headers.get("Content-Type"));
+export const fetchExcelData = async (options: ExcelOptions): Promise<any[]> => {
+  const { filePath, targetColumn, filterColumn, filterValue } = options;
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch Excel file: ${response.status} ${response.statusText}`
-      );
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-
-    const workbook = XLSX.read(arrayBuffer, { type: "array" });
-
-    const sheetName = workbook.SheetNames[0];
-
-    const worksheet = workbook.Sheets[sheetName];
-    // Convert the worksheet to a 2D array (row 0 as header)
-    const data = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
-
-    return data;
-  } catch (error) {
-    console.error("Error in fetchExcelData:", error);
-    throw error; // rethrow so the caller knows an error occurred
+  const response = await fetch(filePath);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch file at ${filePath}`);
   }
+
+  // Read the response as an ArrayBuffer
+  const buffer = await response.arrayBuffer();
+
+  // Parse the Excel file using SheetJS/xlsx
+  const workbook = XLSX.read(buffer, { type: "array" });
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+
+  // Convert the worksheet to JSON (each object represents a row with header keys)
+  const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
+
+  // Optionally filter the rows if filtering criteria is provided
+  const filteredData =
+    filterColumn && filterValue !== undefined
+      ? jsonData.filter((row) => row[filterColumn] === filterValue)
+      : jsonData;
+
+  // Extract the target column data from the filtered rows
+  const columnData = filteredData.map((row) => row[targetColumn]);
+
+  return columnData;
 };

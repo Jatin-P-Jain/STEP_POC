@@ -17,7 +17,7 @@ import { timeRangeLabels } from "../../../data/timeRangeOptions";
 interface TimeRangeToggleProps {
   timeRange: string;
   onChange: (event: MouseEvent<HTMLElement>, newRange: string | null) => void;
-  onCustomApply: (range: [Date | null, Date | null]) => void;
+  onCustomApply?: (range: [Date | null, Date | null]) => void;
 }
 
 const TimeRangeToggle: React.FC<TimeRangeToggleProps> = ({
@@ -54,7 +54,7 @@ const TimeRangeToggle: React.FC<TimeRangeToggleProps> = ({
 
   const handleApplyCustomRange = () => {
     handlePopoverClose();
-    onCustomApply(customRange);
+    onCustomApply && onCustomApply(customRange);
   };
 
   const open = Boolean(popoverAnchor);

@@ -1,5 +1,3 @@
-import { Layout } from "react-grid-layout";
-
 // Define responsive breakpoints (in pixels)
 export const breakpoints = {
   lg: 1200,

@@ -1,7 +1,6 @@
 import { Layout } from "react-grid-layout";
 import { cols } from "./dashboardLayout";
-import { ChartConfig } from "../data/mock_data/chartData";
-
+import { ChartConfig } from "../customHooks/useChartData";
 
 /**
  * Generates a layout for a responsive grid given an array of cards.
