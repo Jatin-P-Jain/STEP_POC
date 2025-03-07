@@ -1,26 +1,40 @@
-// excelFetcher.ts
 import * as XLSX from "xlsx";
+
+export interface ExcelFilter {
+  /** Header name of the column to filter on */
+  column: string;
+  /** An array of acceptable values for the filter.
+   * The row passes the filter if its value is included in this array.
+   */
+  values: any[];
+}
 
 export interface ExcelOptions {
   /** Path to the Excel file (e.g., '/sample.xlsx' in the public folder) */
   filePath: string;
-  /** The header name of the column you want to extract */
-  targetColumn: string;
-  /** (Optional) Header name of the column to filter on */
-  filterColumn?: string;
-  /** (Optional) The value to filter the rows by */
-  filterValue?: any;
+  /** An array of header names for the columns you want to extract */
+  targetColumns: string[];
+  /** (Optional) Array of filters; each filter specifies a column and acceptable values.
+   * A row is included if for every filter, the row's value for that column is one of the acceptable values.
+   */
+  filters?: ExcelFilter[];
 }
 
 /**
  * Fetches an Excel file, parses it, optionally filters the data,
- * and returns an array of values from the target column.
+ * and returns an object mapping each target column to an array of its values.
  *
- * @param options ExcelOptions containing filePath, targetColumn, and optional filter criteria.
- * @returns A promise resolving to an array of data from the target column.
+ * The function supports multiple filters where each filter contains an array of acceptable values.
+ * A row is included only if, for every filter, the row's value in the specified column
+ * is one of the acceptable values.
+ *
+ * @param options ExcelOptions containing filePath, targetColumns, and optional filters.
+ * @returns A promise resolving to an object where each key is a target column and the value is an array of data from that column.
  */
-export const fetchExcelData = async (options: ExcelOptions): Promise<any[]> => {
-  const { filePath, targetColumn, filterColumn, filterValue } = options;
+export const fetchExcelData = async (
+  options: ExcelOptions
+): Promise<Record<string, any[]>> => {
+  const { filePath, targetColumns, filters } = options;
 
   const response = await fetch(filePath);
   if (!response.ok) {
@@ -38,14 +52,20 @@ export const fetchExcelData = async (options: ExcelOptions): Promise<any[]> => {
   // Convert the worksheet to JSON (each object represents a row with header keys)
   const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
 
-  // Optionally filter the rows if filtering criteria is provided
+  // Optionally filter the rows if filters are provided.
+  // A row is kept if, for every filter, its value in the filter's column is one of the acceptable values.
   const filteredData =
-    filterColumn && filterValue !== undefined
-      ? jsonData.filter((row) => row[filterColumn] === filterValue)
+    filters && filters.length > 0
+      ? jsonData.filter((row) =>
+          filters.every((filter) => filter.values.includes(row[filter.column]))
+        )
       : jsonData;
 
-  // Extract the target column data from the filtered rows
-  const columnData = filteredData.map((row) => row[targetColumn]);
+  // Extract the data for each target column from the filtered rows.
+  const result: Record<string, any[]> = {};
+  targetColumns.forEach((col) => {
+    result[col] = filteredData.map((row) => row[col]);
+  });
 
-  return columnData;
+  return result;
 };

@@ -16,6 +16,7 @@ export interface ChartConfig {
 export interface ChartDefinition {
   id: string;
   title: string;
+  targetColumns?: string[];
   processor: DataProcessor;
 }
 
@@ -24,12 +25,14 @@ export const chartDefinitions: ChartDefinition[] = [
   {
     id: "card1",
     title: "Online Rating Index (ORI)",
-    processor: processDataForDonutChart,
+    targetColumns: ["Online Rating Index"],
+    processor: processDataForDonutChar,
   },
   {
     id: "card2",
-    title: "Guest Satisfaction Index",
-    processor: processBarChartData,
+    title: "STEP Index",
+    targetColumns: ["STEP_Index"],
+    processor: processDataForDonutChart,
   },
   {
     id: "card3",

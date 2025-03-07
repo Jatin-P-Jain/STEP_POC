@@ -7,14 +7,23 @@ export interface ChartData {
 }
 
 // A type for a function that processes raw data and returns chart data.
-export type DataProcessor = (data: number[]) => ChartData;
+// Now accepts a record of number arrays, with keys corresponding to target columns.
+export type DataProcessor = (data: Record<string, any[]>) => ChartData;
 
 /**
  * Processor for a donut chart.
  * Converts raw numerical data into a frequency map.
+ * It assumes that the relevant data is in the first key of the record.
  */
 export const processDataForDonutChart: DataProcessor = (data) => {
-  const frequencyMap = data.reduce((acc, curr) => {
+  const keys = Object.keys(data);
+  if (keys.length === 0) {
+    return { chartType: "donut", labels: [], series: [] };
+  }
+  const colKey = keys[0];
+  const columnData = data[colKey];
+
+  const frequencyMap = columnData.reduce((acc, curr) => {
     acc[curr] = (acc[curr] || 0) + 1;
     return acc;
   }, {} as Record<number, number>);
@@ -32,8 +41,9 @@ export const processDataForDonutChart: DataProcessor = (data) => {
 /**
  * Processor for a bar chart.
  * Returns static data for demonstration purposes.
+ * Ignores the input data.
  */
-export const processBarChartData: DataProcessor = () => ({
+export const processBarChartData: DataProcessor = (_data) => ({
   chartType: "bar",
   labels: ["Q1", "Q2", "Q3", "Q4"],
   series: [30, 40, 50, 60],
@@ -42,8 +52,9 @@ export const processBarChartData: DataProcessor = () => ({
 /**
  * Processor for a pie chart.
  * Returns static data for demonstration purposes.
+ * Ignores the input data.
  */
-export const processPieChartData: DataProcessor = () => ({
+export const processPieChartData: DataProcessor = (_data) => ({
   chartType: "pie",
   labels: ["Positive", "Neutral", "Negative"],
   series: [45, 35, 20],
